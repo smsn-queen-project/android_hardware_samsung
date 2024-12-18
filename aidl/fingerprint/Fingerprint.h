@@ -39,12 +39,12 @@ private:
     LegacyHAL mHal;
     LockoutTracker mLockoutTracker;
     FingerprintSensorType mSensorType;
-    std::unique_ptr<UdfpsHandler> mUdfpsHandler;  // Unique pointer for conditional initialization
     int mMaxEnrollmentsPerUser;
     bool mSupportsGestures;
     int uinputFd;
 
     std::shared_ptr<Session> mSession;
+    std::unique_ptr<UdfpsHandler> mUdfpsHandler;
 };
 
 } // namespace fingerprint

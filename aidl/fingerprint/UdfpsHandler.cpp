@@ -1,8 +1,14 @@
+/*
+ * Copyright (C) 2024 The LineageOS Project
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "UdfpsHandler.h"
-#include <fstream>
-#include <string>
 #include <android-base/logging.h>
 #include <fingerprint.sysprop.h>
+#include <fstream>
+#include <string>
 
 using namespace ::android::fingerprint::samsung;
 
@@ -26,27 +32,43 @@ static void UdfpsHandler::set(const std::string& path, const T& value) {
 }
 
 void UdfpsHandler::enableFodPress() {
-    LOG(INFO) << "Enabling FOD press.";
+    LOG(INFO) << "Enabling FOD press";
     set(TSP_CMD, "fod_enable,1,1,0");
 }
 
 void UdfpsHandler::disableFodPress() {
-    LOG(INFO) << "Disabling FOD press.";
+    LOG(INFO) << "Disabling FOD press";
     set(TSP_CMD, "fod_enable,0,0,0");
 }
 
 void UdfpsHandler::setFodRect() {
-    std::string fod_rect = FingerprintHalProperties::rectangular_sensor_location().value_or("");
-    if (!fod_rect.empty()) {
-        LOG(INFO) << "Sending set_fod_rect, " << fod_rect << " command to Touch CMD ";
-        set(TSP_CMD, "set_fod_rect," + fod_rect);
+    std::ifstream file(TSP_CMD_LIST);
+    std::string line;
+    if (file.is_open()) {
+         while (getline(file, line)) {
+            if (!line.compare("set_fod_rect")) {
+                std::string fod_rect = FingerprintHalProperties::rectangular_sensor_location().value_or("");
+                if (!fod_rect.empty()) {
+                    LOG(INFO) << "Writing set_fod_rect," << fod_rect << " to TSP Sponge";
+                    set(TSP_CMD, "set_fod_rect," + fod_rect);
+                    return;
+                }
+                else {
+                    LOG(INFO) << "Rectangle FOD location is not defined, skipping setFodRect...";
+                    return;
+                }
+            }
+            else {
+                LOG(INFO) << "set_fod_rect command is not supported by TSP, skipping setFodRect..."; 
+                return;
+            }
+        }
+        file.close();
     }
-    else
-        LOG(INFO) << "FOD rectangle is not defined. Skip sending set_fod_rect command"; 
 }
 
-}  // namespace fingerprint
-}  // namespace biometrics
-}  // namespace hardware
-}  // namespace android
-}  // namespace aidl
+} // namespace fingerprint
+} // namespace biometrics
+} // namespace hardware
+} // namespace android
+} // namespace aidl
