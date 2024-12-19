@@ -8,7 +8,6 @@
 #include "Legacy2Aidl.h"
 #include "Session.h"
 #include "VendorConstants.h"
-#include "UdfpsHandler.h"
 
 #include <fingerprint.sysprop.h>
 
@@ -48,7 +47,8 @@ Session::Session(LegacyHAL hal, int userId, std::shared_ptr<ISessionCallback> cb
     if (sensorTypeProp == "udfps_optical") {
         mUdfpsHandler = std::make_unique<UdfpsHandler>();
         LOG(INFO) << "UdfpsHandler initialized in Session";
-        mUdfpsHandler->setFodRect();
+        std::string fod_rect = FingerprintHalProperties::rectangular_sensor_location().value_or("");
+        mUdfpsHandler->setFodRect(fod_rect);
     }
 
     mDeathRecipient = AIBinder_DeathRecipient_new(onClientDeath);

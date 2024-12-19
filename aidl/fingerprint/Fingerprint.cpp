@@ -6,7 +6,6 @@
 
 #include "Fingerprint.h"
 #include "VendorConstants.h"
-#include "UdfpsHandler.h"
 
 #include <fingerprint.sysprop.h>
 

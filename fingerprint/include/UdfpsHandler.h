@@ -15,7 +15,9 @@ namespace fingerprint {
 class UdfpsHandler {
 public:
     void setFodPress(bool enable);
-    void setFodRect();
+    void setFodRect(const std::string& fod_rect);
+    template <typename T>
+    void set(const std::string& path, const T& value);
 
 private:
     static constexpr const char* TSP_CMD = "/sys/class/sec/tsp/cmd";

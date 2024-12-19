@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "UdfpsHandler.h"
 #include <android-base/logging.h>
-#include <fingerprint.sysprop.h>
 #include <fstream>
 #include <string>
-
-using namespace ::android::fingerprint::samsung;
+#include "UdfpsHandler.h"
 
 namespace aidl {
 namespace android {
@@ -19,7 +16,7 @@ namespace biometrics {
 namespace fingerprint {
 
 template <typename T>
-static void UdfpsHandler::set(const std::string& path, const T& value) {
+void UdfpsHandler::set(const std::string& path, const T& value) {
     std::ofstream file(path);
     if (!file.is_open()) {
         LOG(ERROR) << "Failed to open file at path: " << path;
@@ -42,7 +39,7 @@ void UdfpsHandler::setFodPress(bool enable) {
     }
 }
 
-void UdfpsHandler::setFodRect() {
+void UdfpsHandler::setFodRect(const std::string& fod_rect) {
     std::ifstream file(TSP_CMD_LIST);
     if (!file.is_open()) {
         LOG(ERROR) << "Failed to open TSP_CMD_LIST file, skipping setFodRect...";
@@ -50,13 +47,12 @@ void UdfpsHandler::setFodRect() {
     }
 
     std::string line;
-    bool cmdlist_support = false;
+    bool cmd_support = false;
 
     while (getline(file, line)) {
         if (line == "set_fod_rect") {
-            cmdlist_support = true;
+            cmd_support = true;
 
-            std::string fod_rect = FingerprintHalProperties::rectangular_sensor_location().value_or("");
             if (!fod_rect.empty()) {
                 LOG(INFO) << "Writing set_fod_rect," << fod_rect << " to TSP Sponge";
                 set(TSP_CMD, "set_fod_rect," + fod_rect);
@@ -67,7 +63,7 @@ void UdfpsHandler::setFodRect() {
         }
     }
 
-    if (!cmdlist_support) {
+    if (!cmd_support) {
         LOG(INFO) << "set_fod_rect command is not available to TSP, skipping setFodRect...";
     }
 }
