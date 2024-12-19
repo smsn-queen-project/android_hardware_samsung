@@ -71,7 +71,7 @@ ndk::ScopedAStatus Session::revokeChallenge(int64_t challenge) {
     LOG(INFO) << "revokeChallenge";
 
     if (mUdfpsHandler) {
-        mUdfpsHandler->disableFodPress();
+        mUdfpsHandler->setFodPress(false);
     }
 
     mHal.ss_fingerprint_post_enroll();
@@ -85,7 +85,7 @@ ndk::ScopedAStatus Session::enroll(const HardwareAuthToken& hat,
     LOG(INFO) << "enroll";
 
     if (mUdfpsHandler) {
-        mUdfpsHandler->enableFodPress();
+        mUdfpsHandler->setFodPress(true);
     }
 
     if (FingerprintHalProperties::force_calibrate().value_or(false)) {
@@ -117,7 +117,7 @@ ndk::ScopedAStatus Session::authenticate(int64_t operationId,
     LOG(INFO) << "authenticate";
 
     if (mUdfpsHandler) {
-        mUdfpsHandler->enableFodPress();
+        mUdfpsHandler->setFodPress(true);
     }
 
     int32_t error = mHal.ss_fingerprint_authenticate(operationId, mUserId);
@@ -205,7 +205,7 @@ ndk::ScopedAStatus Session::resetLockout(const HardwareAuthToken& /*hat*/) {
     LOG(INFO) << "resetLockout";
 
     if (mUdfpsHandler) {
-        mUdfpsHandler->disableFodPress();
+        mUdfpsHandler->setFodPress(false);
     }
 
     clearLockout(true);
@@ -460,7 +460,7 @@ void Session::notify(const fingerprint_msg_t* msg) {
                 translate(hat, authToken);
 
                 if (mUdfpsHandler) {
-                    mUdfpsHandler->disableFodPress();
+                    mUdfpsHandler->setFodPress(false);
                 }
                 mCb->onAuthenticationSucceeded(msg->data.authenticated.finger.fid, authToken);
                 mLockoutTracker.reset(true);

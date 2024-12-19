@@ -21,49 +21,54 @@ namespace fingerprint {
 template <typename T>
 static void UdfpsHandler::set(const std::string& path, const T& value) {
     std::ofstream file(path);
-    if (!file) {
-        LOG(ERROR) << "Failed to open file at path: " << path << ";";
+    if (!file.is_open()) {
+        LOG(ERROR) << "Failed to open file at path: " << path;
         return;
     }
+
     file << value << std::endl;
-    if (!file) {
+    if (file.fail()) {
         LOG(ERROR) << "Failed to write value: " << value << " to path: " << path;
     }
 }
 
-void UdfpsHandler::enableFodPress() {
-    LOG(INFO) << "Enabling FOD press";
-    set(TSP_CMD, "fod_enable,1,1,0");
-}
-
-void UdfpsHandler::disableFodPress() {
-    LOG(INFO) << "Disabling FOD press";
-    set(TSP_CMD, "fod_enable,0,0,0");
+void UdfpsHandler::setFodPress(bool enable) {
+    if (enable) {
+        LOG(INFO) << "Enabling FOD press";
+        set(TSP_CMD, "fod_enable,1,1,0");
+    } else {
+        LOG(INFO) << "Disabling FOD press";
+        set(TSP_CMD, "fod_enable,0,0,0");
+    }
 }
 
 void UdfpsHandler::setFodRect() {
     std::ifstream file(TSP_CMD_LIST);
+    if (!file.is_open()) {
+        LOG(ERROR) << "Failed to open TSP_CMD_LIST file, skipping setFodRect...";
+        return;
+    }
+
     std::string line;
-    if (file.is_open()) {
-         while (getline(file, line)) {
-            if (!line.compare("set_fod_rect")) {
-                std::string fod_rect = FingerprintHalProperties::rectangular_sensor_location().value_or("");
-                if (!fod_rect.empty()) {
-                    LOG(INFO) << "Writing set_fod_rect," << fod_rect << " to TSP Sponge";
-                    set(TSP_CMD, "set_fod_rect," + fod_rect);
-                    return;
-                }
-                else {
-                    LOG(INFO) << "Rectangle FOD location is not defined, skipping setFodRect...";
-                    return;
-                }
+    bool cmdlist_support = false;
+
+    while (getline(file, line)) {
+        if (line == "set_fod_rect") {
+            cmdlist_support = true;
+
+            std::string fod_rect = FingerprintHalProperties::rectangular_sensor_location().value_or("");
+            if (!fod_rect.empty()) {
+                LOG(INFO) << "Writing set_fod_rect," << fod_rect << " to TSP Sponge";
+                set(TSP_CMD, "set_fod_rect," + fod_rect);
+            } else {
+                LOG(INFO) << "Rectangle FOD location is not defined, skipping setFodRect...";
             }
-            else {
-                LOG(INFO) << "set_fod_rect command is not supported by TSP, skipping setFodRect..."; 
-                return;
-            }
+            return;
         }
-        file.close();
+    }
+
+    if (!cmdlist_support) {
+        LOG(INFO) << "set_fod_rect command is not available to TSP, skipping setFodRect...";
     }
 }
 

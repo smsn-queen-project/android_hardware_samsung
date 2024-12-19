@@ -14,8 +14,7 @@ namespace fingerprint {
 
 class UdfpsHandler {
 public:
-    void enableFodPress();
-    void disableFodPress();
+    void setFodPress(bool enable);
     void setFodRect();
 
 private:
